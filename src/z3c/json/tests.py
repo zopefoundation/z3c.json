@@ -18,10 +18,24 @@ $Id:$
 __docformat__ = "reStructuredText"
 
 import unittest
+import BaseHTTPServer
+import random
+import threading
+import urllib
+import cgi
+import pprint
+
+from zope.app.testing import ztapi
 
 from z3c.json import minjson as json
 from z3c.json.minjson import ReadException
 from z3c.json.minjson import WriteException
+
+from z3c.json.interfaces import IJSONWriter, IJSONReader
+from z3c.json.converter import JSONWriter, JSONReader
+from z3c.json.exceptions import ResponseError, ProtocolError
+
+from z3c.json.proxy import JSONRPCProxy
 
 
 def spaceless(aString):
@@ -484,10 +498,263 @@ class JSONTests(unittest.TestCase):
         self.assertEqual([ord(x) for x in json.read(test)],[92,10])
 
 
+#We'll bring up a LIVE HTTP server on localhost to be able to test
+#JSONRPCProxy
+#stuff taken from zc.testbrowser.tests, thanks!
+
+class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+
+    def version_string(self):
+        return 'BaseHTTP'
+
+    def date_time_string(self):
+        return 'Mon, 17 Sep 2007 10:05:42 GMT'
+
+    def do_GET(self):
+        #print "GET"
+        
+        if self.path.endswith('robots.txt'):
+            self.send_response(404)
+            self.send_header('Connection', 'close')
+            return
+
+        global next_response_body
+        global next_response_status
+        global next_response_reason
+        global next_response_type
+    
+        if next_response_body is None:
+            self.send_response(500)
+            self.send_header('Connection', 'close')
+            return
+
+        self.send_response(next_response_status)
+        self.send_header('Connection', 'close')
+        self.send_header('Content-type', next_response_type)
+        self.send_header('Content-Length', str(len(next_response_body)))
+        self.end_headers()
+        self.wfile.write(next_response_body)
+
+    def do_POST(self):
+        #print "POST"
+        
+        body = self.rfile.read(int(self.headers['content-length']))
+        
+        #print body
+        
+        global last_request_body
+        last_request_body = body
+        
+        global next_response_body
+        global next_response_status
+        global next_response_reason
+        global next_response_type
+        
+        self.send_response(next_response_status)
+        self.send_header('Connection', 'close')
+        self.send_header('Content-type', next_response_type)
+        self.send_header('Content-Length', str(len(next_response_body)))
+        self.end_headers()
+        self.wfile.write(next_response_body)
+
+    def log_request(self, *args, **kws):
+        pass
+
+def set_next_response(
+    response_body=None, 
+    response_status=200, response_reason='OK',
+    response_type="text/html"):
+    
+    global next_response_body
+    global next_response_status
+    global next_response_reason
+    global next_response_type
+    
+    next_response_body = response_body
+    next_response_status = response_status
+    next_response_reason = response_reason
+    next_response_type = response_type
+
+def set_next_response_json(result, jsonId=None, error=None):
+    jsonId = jsonId or "jsonrpc"
+    wrapper = {'id': jsonId}
+    wrapper['result'] = result
+    wrapper['error'] = error
+
+    json = JSONWriter()
+    data = json.write(wrapper)
+    
+    set_next_response(data,
+        response_type="application/x-javascript;charset=utf-8"
+        )
+    
+    
+
+def get_last_request():
+    global last_request_body
+    return last_request_body
+
+def serve_requests(server):
+    global json_test_server_stop
+    while not json_test_server_stop:
+        server.handle_request()
+    server.server_close()
+
+def setUpServer(test):
+    global json_test_server_stop
+    json_test_server_stop = False
+    port = random.randint(20000,30000)
+    test.TEST_PORT = port
+    server = BaseHTTPServer.HTTPServer(('localhost', port), TestHandler)
+    thread = threading.Thread(target=serve_requests, args=[server])
+    thread.setDaemon(True)
+    thread.start()
+    test.web_server_thread = thread
+
+def tearDownServer(test):
+    global json_test_server_stop
+    json_test_server_stop = True
+    # make a request, so the last call to `handle_one_request` will return
+    try:
+        urllib.urlretrieve('http://localhost:%d/' % test.TEST_PORT)
+    except IOError:
+        pass # it's ok, server is already dead
+    test.web_server_thread.join()
+
+
+class JSONRPCProxyLiveTester(unittest.TestCase):
+    def setUp(self):
+        ztapi.provideUtility(IJSONWriter, JSONWriter())
+        ztapi.provideUtility(IJSONReader, JSONReader())
+
+        setUpServer(self)
+    
+    def tearDown(self):
+        tearDownServer(self)
+    
+    def testSimple(self):
+        #from pub.dbgpclient import brk; brk('172.16.144.39')
+
+        proxy = JSONRPCProxy('http://localhost:%d/' % self.TEST_PORT)
+        
+        set_next_response_json(True, "jsonrpc")
+        
+        y = proxy.hello()
+        self.assertEqual(y, True)
+        
+        x = get_last_request()
+        self.assertEqual(x,
+            """{"version":"1.1","params":{},"method":"hello","id":"jsonrpc"}""")
+        
+        
+        
+        set_next_response_json(123, "jsonrpc")
+        
+        y = proxy.greeting(u'Jessy')
+        
+        self.assertEqual(y, 123)
+        
+        x = get_last_request()
+        self.assertEqual(x,
+            """{"version":"1.1","params":["Jessy"],"method":"greeting","id":"jsonrpc"}""")
+        
+        
+        set_next_response('blabla')
+        
+        try:
+            y = proxy.hello()
+        except ResponseError:
+            pass
+        else:
+            self.fail("ResponseError expected")
+            
+        set_next_response('{blabla}')
+        try:
+            y = proxy.hello()
+        except ResponseError:
+            pass
+        else:
+            self.fail("ResponseError expected")
+    
+    dataToTest = [
+        {'response_json': True,
+         'call_method': 'hello',
+         'assert_retval': True,
+         'assert_request':
+            """{"version":"1.1","params":{},"method":"hello","id":"jsonrpc"}""",
+        },
+        {'response_json': 123,
+         'call_method': 'greeting',
+         'call_args': [u'Jessy'],
+         'assert_retval': 123,
+         'assert_request':
+            """{"version":"1.1","params":["Jessy"],"method":"greeting","id":"jsonrpc"}""",
+        },
+        {'response': 'blabla',
+         'call_method': 'hello',
+         'exception': ResponseError,
+        },
+        {'response': 'blabla',
+         'response_status': 404,
+         'call_method': 'hello',
+         'exception': ProtocolError,
+        },
+    ]
+    
+    def testDataDriven(self):
+        for item in self.dataToTest:
+            jsonid = item.get('proxy_jsonid', None)
+            transport = item.get('proxy_transport', None)
+            proxy = JSONRPCProxy('http://localhost:%d/' % self.TEST_PORT,
+                                 transport=transport,
+                                 jsonId=jsonid)
+            
+            if 'response_json' in item:
+                #set response based on JSON data
+                error = item.get('response_json_error', None)
+                jsonid = item.get('response_jsonid', None)
+                set_next_response_json(item['response_json'],
+                                       jsonid, error=error)
+            else:
+                #set response based on plain HTTP data
+                response_status=item.get('response_status', 200)
+                response_reason=item.get('response_reason', 'OK')
+                response_type=item.get('response_type',"text/html")
+                
+                set_next_response(item['response'], response_status,
+                    response_reason, response_type)
+            
+            args = item.get('call_args', [])
+            kwargs = item.get('call_kwargs', {})
+            exception = item.get('exception', None)
+            method = getattr(proxy, item['call_method'])
+            
+            if exception:
+                try:
+                    retval = method(*args, **kwargs)
+                except exception:
+                    pass
+                else:
+                    self.fail("%s expected" % str(exception.__class__))
+                
+                if 'assert_request' in item:
+                    x = get_last_request()
+                    self.assertEqual(x, item['assert_request'])
+            else:
+                retval = method(*args, **kwargs)
+                if 'assert_retval' in item:
+                    self.assertEqual(retval, item['assert_retval'])
+                if 'assert_request' in item:
+                    x = get_last_request()
+                    self.assertEqual(x, item['assert_request'])
+
 def test_suite():
-    loader = unittest.TestLoader()
-    return loader.loadTestsFromTestCase(JSONTests)
+    return unittest.TestSuite((
+        unittest.makeSuite(JSONTests),
+        unittest.makeSuite(JSONRPCProxyLiveTester),
+        ))
 
 
 if __name__=='__main__':
-    unittest.TextTestRunner().run(test_suite())
+    unittest.main(defaultTest='test_suite')
+    #unittest.TextTestRunner().run(test_suite())

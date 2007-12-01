@@ -30,6 +30,9 @@ from z3c.json import interfaces
 from z3c.json.exceptions import ProtocolError
 from z3c.json.exceptions import ResponseError
 
+from z3c.json.transport import Transport
+from z3c.json.transport import SafeTransport
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,7 +111,7 @@ class JSONRPCProxy(object):
 
         if isinstance(response, int):
             # that's just a status code response with no result
-            logger.error('Recieved status code %s' % response)
+            logger.error('Received status code %s' % response)
 
         if len(response) == 3:
             # that's a valid response format
