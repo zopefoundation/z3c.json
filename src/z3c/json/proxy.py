@@ -100,6 +100,9 @@ class JSONRPCProxy(object):
         
         This will raise a ResponseError or return the JSON result dict
         """
+        # apply encoding if any
+        if self.__encoding:
+            request = request.encode(self.__encoding)
         # start the call
         try:
             response = self.__transport.request(self.__host, self.__handler,
