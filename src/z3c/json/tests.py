@@ -25,7 +25,9 @@ import urllib
 import cgi
 import pprint
 
-from zope.app.testing import ztapi
+import zope.component
+from zope.testing import doctest
+from zope.testing.doctestunit import DocFileSuite
 
 from z3c.json import minjson as json
 from z3c.json.minjson import ReadException
@@ -624,8 +626,8 @@ def tearDownServer(test):
 
 class JSONRPCProxyLiveTester(unittest.TestCase):
     def setUp(self):
-        ztapi.provideUtility(IJSONWriter, JSONWriter())
-        ztapi.provideUtility(IJSONReader, JSONReader())
+        zope.component.provideUtility(JSONWriter(), IJSONWriter)
+        zope.component.provideUtility(JSONReader(), IJSONReader)
 
         setUpServer(self)
     
@@ -750,6 +752,9 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
+        DocFileSuite('README.txt',
+            optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
+            ),
         unittest.makeSuite(JSONTests),
         unittest.makeSuite(JSONRPCProxyLiveTester),
         ))
