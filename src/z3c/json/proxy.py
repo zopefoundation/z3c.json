@@ -107,6 +107,7 @@ class JSONRPCProxy(object):
         try:
             response = self.__transport.request(self.__host, self.__handler,
                 request, verbose=self.__verbose)
+            self.error = None
         except ResponseError, e:
             # catch error message
             self.error = unicode(e)
