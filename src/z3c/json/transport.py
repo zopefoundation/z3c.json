@@ -155,7 +155,7 @@ class Transport:
         host, extra_headers, x509 = self.get_host_info(host)
         connection.putheader("Host", host)
         if extra_headers:
-            if isinstance(extra_headers, DictType):
+            if isinstance(extra_headers, dict):
                 extra_headers = extra_headers.items()
             for key, value in extra_headers:
                 connection.putheader(key, value)
