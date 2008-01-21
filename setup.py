@@ -58,5 +58,6 @@ setup (
         'setuptools',
         'zope.component',
         ],
+    dependency_links = ['http://download.zope.org/distribution'],
     zip_safe = False,
 )
