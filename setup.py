@@ -23,12 +23,17 @@ def read(*rnames):
 
 setup (
     name='z3c.json',
-    version='0.5.1dev',
+    version='0.5.1',
     author = "Roger Ineichen and the Zope Community",
-    author_email = "zope3-dev@zope.org",
-    description = "Zope3 JSON base libraries used for z3c.jsonpage and z3c.jsonrpc",
+    author_email = "zope-dev@zope.org",
+    description = "Zope3 JSON base libraries",
     long_description=(
         read('README.txt')
+        + '\n\n' +
+        'Detailed Documentation\n'
+        '**********************'
+        + '\n\n' +
+        read('src', 'z3c', 'json', 'README.txt')
         + '\n\n' +
         read('CHANGES.txt')
         ),
@@ -44,7 +49,7 @@ setup (
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP',
         'Framework :: Zope3'],
-    url = 'http://cheeseshop.python.org/pypi/z3c.json',
+    url = 'http://pypi.python.org/pypi/z3c.json',
     packages = find_packages('src'),
     include_package_data = True,
     package_dir = {'':'src'},
@@ -58,6 +63,5 @@ setup (
         'setuptools',
         'zope.component',
         ],
-    dependency_links = ['http://download.zope.org/distribution'],
     zip_safe = False,
 )

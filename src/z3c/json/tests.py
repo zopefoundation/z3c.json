@@ -475,26 +475,26 @@ class JSONTests(unittest.TestCase):
         r = json.write(obj, 'utf-8')
         #cannot assertEqual here, but the printed representation should be readable
         #self.assertEqual(unicode(r,'utf-8'), good_composite_result)
-    
+
     #these tests from Koen van der Sande; just in case we really want literal
     # '\n' sent across the wire.
-    
+
     def testReadSpecialEscapedChars1(self):
         test = r'"\\f"'
         self.assertEqual([ord(x) for x in json.read(test)],[92,102])
-        
+
     def testReadSpecialEscapedChars2(self):
         test = r'"\\a"'
         self.assertEqual([ord(x) for x in json.read(test)],[92,97])
-        
+
     def testReadSpecialEscapedChars3(self):
         test = r'"\\\\a"'
         self.assertEqual([ord(x) for x in json.read(test)],[92,92,97])
-    
+
     def testReadSpecialEscapedChars4(self):
         test = r'"\\\\b"'
         self.assertEqual([ord(x) for x in json.read(test)],[92,92,98])
-    
+
     def testReadSpecialEscapedChars5(self):
         test = r'"\\\n"'
         self.assertEqual([ord(x) for x in json.read(test)],[92,10])
@@ -514,7 +514,7 @@ class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         #print "GET"
-        
+
         if self.path.endswith('robots.txt'):
             self.send_response(404)
             self.send_header('Connection', 'close')
@@ -524,7 +524,7 @@ class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         global next_response_status
         global next_response_reason
         global next_response_type
-    
+
         if next_response_body is None:
             self.send_response(500)
             self.send_header('Connection', 'close')
@@ -539,19 +539,19 @@ class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_POST(self):
         #print "POST"
-        
+
         body = self.rfile.read(int(self.headers['content-length']))
-        
+
         #print body
-        
+
         global last_request_body
         last_request_body = body
-        
+
         global next_response_body
         global next_response_status
         global next_response_reason
         global next_response_type
-        
+
         self.send_response(next_response_status)
         self.send_header('Connection', 'close')
         self.send_header('Content-type', next_response_type)
@@ -563,15 +563,15 @@ class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         pass
 
 def set_next_response(
-    response_body=None, 
+    response_body=None,
     response_status=200, response_reason='OK',
     response_type="text/html"):
-    
+
     global next_response_body
     global next_response_status
     global next_response_reason
     global next_response_type
-    
+
     next_response_body = response_body
     next_response_status = response_status
     next_response_reason = response_reason
@@ -585,12 +585,12 @@ def set_next_response_json(result, jsonId=None, error=None):
 
     json = JSONWriter()
     data = json.write(wrapper)
-    
+
     set_next_response(data,
         response_type="application/x-javascript;charset=utf-8"
         )
-    
-    
+
+
 
 def get_last_request():
     global last_request_body
@@ -630,46 +630,46 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
         zope.component.provideUtility(JSONReader(), IJSONReader)
 
         setUpServer(self)
-    
+
     def tearDown(self):
         tearDownServer(self)
-    
+
     def testSimple(self):
         #from pub.dbgpclient import brk; brk('172.16.144.39')
 
         proxy = JSONRPCProxy('http://localhost:%d/' % self.TEST_PORT)
-        
+
         set_next_response_json(True, "jsonrpc")
-        
+
         y = proxy.hello()
         self.assertEqual(y, True)
-        
+
         x = get_last_request()
         self.assertEqual(x,
             """{"version":"1.1","params":{},"method":"hello","id":"jsonrpc"}""")
-        
-        
-        
+
+
+
         set_next_response_json(123, "jsonrpc")
-        
+
         y = proxy.greeting(u'Jessy')
-        
+
         self.assertEqual(y, 123)
-        
+
         x = get_last_request()
         self.assertEqual(x,
             """{"version":"1.1","params":["Jessy"],"method":"greeting","id":"jsonrpc"}""")
-        
-        
+
+
         set_next_response('blabla')
-        
+
         try:
             y = proxy.hello()
         except ResponseError:
             pass
         else:
             self.fail("ResponseError expected")
-            
+
         set_next_response('{blabla}')
         try:
             y = proxy.hello()
@@ -677,7 +677,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
             pass
         else:
             self.fail("ResponseError expected")
-    
+
     dataToTest = [
         {'response_json': True,
          'call_method': 'hello',
@@ -702,7 +702,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
          'exception': ProtocolError,
         },
     ]
-    
+
     def testDataDriven(self):
         for item in self.dataToTest:
             jsonid = item.get('proxy_jsonid', None)
@@ -710,7 +710,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
             proxy = JSONRPCProxy('http://localhost:%d/' % self.TEST_PORT,
                                  transport=transport,
                                  jsonId=jsonid)
-            
+
             if 'response_json' in item:
                 #set response based on JSON data
                 error = item.get('response_json_error', None)
@@ -722,15 +722,15 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
                 response_status=item.get('response_status', 200)
                 response_reason=item.get('response_reason', 'OK')
                 response_type=item.get('response_type',"text/html")
-                
+
                 set_next_response(item['response'], response_status,
                     response_reason, response_type)
-            
+
             args = item.get('call_args', [])
             kwargs = item.get('call_kwargs', {})
             exception = item.get('exception', None)
             method = getattr(proxy, item['call_method'])
-            
+
             if exception:
                 try:
                     retval = method(*args, **kwargs)
@@ -738,7 +738,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
                     pass
                 else:
                     self.fail("%s expected" % str(exception.__class__))
-                
+
                 if 'assert_request' in item:
                     x = get_last_request()
                     self.assertEqual(x, item['assert_request'])

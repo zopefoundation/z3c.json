@@ -2,16 +2,18 @@
 README
 ======
 
-We can use the JSONReader and JSONWriter if we need to convert something from
-or to JSON. Let's check the utilities:
+We can use the `JSONReader` and `JSONWriter` if we need to convert a data
+structure to or from JSON syntax -- in other words a EcmaScript mapping
+object. Let's check the utilities:
 
   >>> import zope.component
   >>> from z3c.json import interfaces
   >>> from z3c.json import testing
   >>> testing.setUpJSONConverter()
 
-JSONWRiter
-----------
+
+`JSONWriter` Utility
+--------------------
 
   >>> jsonWriter = zope.component.getUtility(interfaces.IJSONWriter)
   >>> jsonWriter
@@ -19,13 +21,15 @@ JSONWRiter
 
 Read some data:
 
-  >>> input = {u'a':['fred',7],u'b':['mary',1.234]}
+  >>> input = {u'a': ['fred', 7],
+  ...          u'b':['mary', 1.234]}
   >>> jsonStr = jsonWriter.write(input)
   >>> jsonStr
   u'{"a":["fred",7],"b":["mary",1.234]}'
 
-JSONReader
-----------
+
+`JSONReader` Utility
+--------------------
 
   >>> jsonReader = zope.component.getUtility(interfaces.IJSONReader)
   >>> jsonReader

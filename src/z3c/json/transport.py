@@ -37,7 +37,7 @@ def getparser():
 class Unmarshaller(object):
     def __init__(self):
         self.data = None
-        
+
     def feed(self, data):
         if self.data is None:
             self.data = data
@@ -54,7 +54,7 @@ class Parser(object):
     def __init__(self, unmarshaller):
         self._target = unmarshaller
         self.data = None
-        
+
     def feed(self, data):
         if self.data is None:
             self.data = data
