@@ -2,13 +2,21 @@
 CHANGES
 =======
 
-0.5.1 (2008-01-24)
-------------------
+Version 0.5.2dev (unreleased)
+-----------------------------
+
+- Implemented JSON-RPC 2.0 specification. Use JSON-RPC 2.0 version as default.
+  Optional the version 1.0 and 1.1 can be set. See JSON-RPC 2.0 specification
+  for more information.
+
+
+Version 0.5.1 (2008-01-24)
+--------------------------
 
 - Improved meta-data.
 
 
-0.5.0 (2008-01-21)
-------------------
+Version 0.5.0 (2008-01-21)
+--------------------------
 
 - Initial Release

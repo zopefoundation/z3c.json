@@ -25,7 +25,7 @@ Read some data:
   ...          u'b':['mary', 1.234]}
   >>> jsonStr = jsonWriter.write(input)
   >>> jsonStr
-  u'{"a":["fred",7],"b":["mary",1.234]}'
+  u'{"a": ["fred", 7], "b": ["mary", 1.234]}'
 
 
 `JSONReader` Utility

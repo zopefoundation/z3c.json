@@ -34,29 +34,54 @@ from z3c.json.transport import Transport
 from z3c.json.transport import SafeTransport
 
 logger = logging.getLogger(__name__)
+JSON_RPC_VERSION = '2.0'
 
 
 class _Method(object):
     
-    def __init__(self, call, name, jsonId):
+    def __init__(self, call, name, jsonId, jsonVersion):
         self.call = call
         self.name = name
         self.jsonId = jsonId
+        self.jsonVersion = jsonVersion
     
     def __call__(self, *args, **kwargs):
         request = {}
-        request['version'] = '1.1'
-        request['method'] = self.name
-        if len(kwargs) is not 0:
-            params = copy.copy(kwargs)
-            index = 0
-            for arg in args:
-                params[str(index)] = arg
-                index = index + 1
-        elif len(args) is not 0:
-            params = copy.copy(args)
+        # add our version
+        if self.jsonVersion == '1.0':
+            pass
+        elif self.jsonVersion == '1.1':
+            request['version'] = self.jsonVersion
         else:
-            params = {}
+            request['jsonrpc'] = self.jsonVersion
+        request['method'] = self.name
+
+        if self.jsonVersion in ['1.0', '1.1']:
+            if len(kwargs) > 0:
+                params = copy.copy(kwargs)
+                index = 0
+                for arg in args:
+                    params[str(index)] = arg
+                    index += 1
+            elif len(args) > 0:
+                params = args
+            else:
+                params = []
+        else:
+            # There is not support for postional and named parameters in one 
+            # call. We propably will add support for this within a extension
+            # in a later version. Till then, we will raise an exception if
+            # we will get both paramters.
+            if len(args) > 0 and len(kwargs) > 0:
+                raise ValueError('Mixing positional and named parameters in one call is not possible')
+            if len(args) > 0:
+                params = args
+            elif len(kwargs) > 0:
+                params = kwargs
+            else:
+                params = []
+
+        # set params and write json
         request['params'] = params
         # add our json id
         request['id'] = self.jsonId
@@ -68,14 +93,15 @@ class _Method(object):
             raise ResponseError("JSONRPC server connection error.")
 
     def __getattr__(self, name):
-        return _Method(self.call, "%s.%s" % (self.name, name), self.jsonId)
+        return _Method(self.call, "%s.%s" % (self.name, name), self.jsonId,
+            self.jsonVersion)
 
 
 class JSONRPCProxy(object):
     """JSON-RPC server proxy."""
 
     def __init__(self, uri, transport=None, encoding=None,
-                 verbose=None, jsonId=None):
+                 verbose=None, jsonId=None, jsonVersion=JSON_RPC_VERSION):
         utype, uri = urllib.splittype(uri)
         if utype not in ("http", "https"):
             raise IOError, "Unsupported JSONRPC protocol"
@@ -93,6 +119,7 @@ class JSONRPCProxy(object):
         self.__encoding = encoding
         self.__verbose = verbose
         self.jsonId = jsonId or u'jsonrpc'
+        self.jsonVersion = jsonVersion or JSON_RPC_VERSION
         self.error = None
 
     def __request(self, request):
@@ -135,7 +162,7 @@ class JSONRPCProxy(object):
 
     def __getattr__(self, name):
         """This let us call methods on remote server."""
-        return _Method(self.__request, name, self.jsonId)
+        return _Method(self.__request, name, self.jsonId, self.jsonVersion)
 
     def __repr__(self):
         return ("<JSONProxy for %s%s>" % (self.__host, self.__handler))
