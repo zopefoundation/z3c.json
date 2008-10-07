@@ -5,6 +5,9 @@ CHANGES
 Version 0.5.2dev (unreleased)
 -----------------------------
 
+- added parse_response_headers to allow subclasses to handle header values if
+  needed.
+
 - Implemented JSON-RPC 2.0 specification. Use JSON-RPC 2.0 version as default.
   Optional the version 1.0 and 1.1 can be set. See JSON-RPC 2.0 specification
   for more information.

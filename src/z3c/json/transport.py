@@ -103,6 +103,8 @@ class Transport:
 
         self.verbose = verbose
 
+        self.parse_response_headers(headers)
+
         try:
             sock = h._conn.sock
         except AttributeError:
@@ -169,6 +171,9 @@ class Transport:
         connection.endheaders()
         if request_body:
             connection.send(request_body)
+
+    def parse_response_headers(self, headers):
+        pass
 
     def parse_response(self, file):
         # compatibility interface
