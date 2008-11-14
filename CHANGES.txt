@@ -2,9 +2,12 @@
 CHANGES
 =======
 
-Version 0.5.2dev (unreleased)
+Version 0.5.3dev (unreleased)
 -----------------------------
 
+- do not test for response len if response is an int
+- fixed possible unicode error in case of response error
+- made all tests pass (JSONWriter inserts no whitespace)
 - added parse_response_headers to allow subclasses to handle header values if
   needed.
 

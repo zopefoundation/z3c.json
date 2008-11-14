@@ -642,7 +642,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
 
         x = get_last_request()
         self.assertEqual(x,
-            """{"params": [], "jsonrpc": "2.0", "method": "hello", "id": "jsonrpc"}""")
+            """{"params":[],"jsonrpc":"2.0","method":"hello","id":"jsonrpc"}""")
 
         set_next_response_json(123, "jsonrpc")
         y = proxy.greeting(u'Jessy')
@@ -650,7 +650,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
 
         x = get_last_request()
         self.assertEqual(x,
-            """{"params": ["Jessy"], "jsonrpc": "2.0", "method": "greeting", "id": "jsonrpc"}""")
+            """{"params":["Jessy"],"jsonrpc":"2.0","method":"greeting","id":"jsonrpc"}""")
 
         set_next_response('blabla')
         try:
@@ -673,14 +673,14 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
          'call_method': 'hello',
          'assert_retval': True,
          'assert_request':
-            """{"params": [], "jsonrpc": "2.0", "method": "hello", "id": "jsonrpc"}""",
+            """{"params":[],"jsonrpc":"2.0","method":"hello","id":"jsonrpc"}""",
         },
         {'response_json': 123,
          'call_method': 'greeting',
          'call_args': [u'Jessy'],
          'assert_retval': 123,
          'assert_request':
-            """{"params": ["Jessy"], "jsonrpc": "2.0", "method": "greeting", "id": "jsonrpc"}""",
+            """{"params":["Jessy"],"jsonrpc":"2.0","method":"greeting","id":"jsonrpc"}""",
         },
         {'response': 'blabla',
          'call_method': 'hello',

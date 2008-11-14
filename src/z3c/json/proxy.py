@@ -38,13 +38,13 @@ JSON_RPC_VERSION = '2.0'
 
 
 class _Method(object):
-    
+
     def __init__(self, call, name, jsonId, jsonVersion):
         self.call = call
         self.name = name
         self.jsonId = jsonId
         self.jsonVersion = jsonVersion
-    
+
     def __call__(self, *args, **kwargs):
         request = {}
         # add our version
@@ -123,8 +123,8 @@ class JSONRPCProxy(object):
         self.error = None
 
     def __request(self, request):
-        """call a method on the remote server. 
-        
+        """call a method on the remote server.
+
         This will raise a ResponseError or return the JSON result dict
         """
         # apply encoding if any
@@ -137,14 +137,13 @@ class JSONRPCProxy(object):
             self.error = None
         except ResponseError, e:
             # catch error message
-            self.error = unicode(e)
+            self.error = unicode(str(e), 'utf-8')
             raise
 
         if isinstance(response, int):
             # that's just a status code response with no result
             logger.error('Received status code %s' % response)
-
-        if len(response) == 3:
+        elif len(response) == 3:
             # that's a valid response format
             if self.jsonId is not None and \
                 (self.jsonId != response.get('id')):
