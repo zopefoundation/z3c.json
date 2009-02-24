@@ -56,24 +56,26 @@ class _Method(object):
             request['jsonrpc'] = self.jsonVersion
         request['method'] = self.name
 
+        # There is not support for postional and named parameters in one 
+        # call. We propably will add support for this within a extension
+        # in a later version. Till then, we will raise an exception if
+        # we will get both paramters.
+        if len(args) > 0 and len(kwargs) > 0:
+            raise ValueError(
+                'Mixing positional and named parameters in one call is not possible')
+
         if self.jsonVersion in ['1.0', '1.1']:
-            if len(kwargs) > 0:
+            if len(args) > 0:
+                params = args
+            elif len(kwargs) > 0:
                 params = copy.copy(kwargs)
                 index = 0
                 for arg in args:
                     params[str(index)] = arg
                     index += 1
-            elif len(args) > 0:
-                params = args
             else:
                 params = []
         else:
-            # There is not support for postional and named parameters in one 
-            # call. We propably will add support for this within a extension
-            # in a later version. Till then, we will raise an exception if
-            # we will get both paramters.
-            if len(args) > 0 and len(kwargs) > 0:
-                raise ValueError('Mixing positional and named parameters in one call is not possible')
             if len(args) > 0:
                 params = args
             elif len(kwargs) > 0:
