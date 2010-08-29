@@ -228,35 +228,14 @@ class BasicAuthTransport(Transport):
         self.password=password
         self.verbose=verbose
 
-    def request(self, host, handler, request_body, verbose=0):
-        # issue JSON-RPC request
-
-        self.verbose = verbose
-
-        h = httplib.HTTP(host)
-        h.putrequest("POST", handler)
-
-        # required by HTTP/1.1
-        h.putheader("Host", host)
-
-        # required by JSON-RPC
-        h.putheader("User-Agent", self.user_agent)
-        h.putheader("Content-Type", "application/json")
-        h.putheader("Content-Length", str(len(request_body)))
-
-        # basic auth
+    def send_content(self, connection, request_body):
+        # send basic auth
         if self.username is not None and self.password is not None:
-            h.putheader("AUTHORIZATION", "Basic %s" %
+            connection.putheader("AUTHORIZATION", "Basic %s" %
                 base64.encodestring("%s:%s" % (self.username, self.password)
                     ).replace("\012", ""))
-        h.endheaders()
 
-        if request_body:
-            h.send(request_body)
+        Transport.send_content(self, connection, request_body)
 
-        errcode, errmsg, headers = h.getreply()
-
-        if errcode != 200:
-            raise ProtocolError(host + handler, errcode, errmsg, headers)
-
-        return self.parse_response(h.getfile())
+class SafeBasicAuthTransport(SafeTransport, BasicAuthTransport):
+    """Basic AUTH through HTTPS"""

@@ -38,6 +38,7 @@ from z3c.json.converter import JSONWriter, JSONReader
 from z3c.json.exceptions import ResponseError, ProtocolError
 
 from z3c.json.proxy import JSONRPCProxy
+from z3c.json.transport import BasicAuthTransport
 
 
 def spaceless(aString):
@@ -546,6 +547,8 @@ class TestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         global last_request_body
         last_request_body = body
+        global last_request_headers
+        last_request_headers = self.headers
 
         global next_response_body
         global next_response_status
@@ -596,6 +599,10 @@ def get_last_request():
     global last_request_body
     return last_request_body
 
+def get_last_headers():
+    global last_request_headers
+    return last_request_headers
+
 def serve_requests(server):
     global json_test_server_stop
     while not json_test_server_stop:
@@ -643,6 +650,46 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
         x = get_last_request()
         self.assertEqual(x,
             """{"params":[],"jsonrpc":"2.0","method":"hello","id":"jsonrpc"}""")
+
+        set_next_response_json(123, "jsonrpc")
+        y = proxy.greeting(u'Jessy')
+        self.assertEqual(y, 123)
+
+        x = get_last_request()
+        self.assertEqual(x,
+            """{"params":["Jessy"],"jsonrpc":"2.0","method":"greeting","id":"jsonrpc"}""")
+
+        set_next_response('blabla')
+        try:
+            y = proxy.hello()
+        except ResponseError:
+            pass
+        else:
+            self.fail("ResponseError expected")
+
+        set_next_response('{blabla}')
+        try:
+            y = proxy.hello()
+        except ResponseError:
+            pass
+        else:
+            self.fail("ResponseError expected")
+
+    def testSimpleBasicAuth(self):
+        transport = BasicAuthTransport('user','passwd')
+
+        proxy = JSONRPCProxy('http://localhost:%d/' % self.TEST_PORT,
+                             transport=transport)
+        set_next_response_json(True, "jsonrpc")
+        y = proxy.hello()
+        self.assertEqual(y, True)
+
+        x = get_last_request()
+        self.assertEqual(x,
+            """{"params":[],"jsonrpc":"2.0","method":"hello","id":"jsonrpc"}""")
+        x = get_last_headers()
+        self.assertEqual(x['authorization'],
+                         'Basic dXNlcjpwYXNzd2Q=')
 
         set_next_response_json(123, "jsonrpc")
         y = proxy.greeting(u'Jessy')

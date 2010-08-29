@@ -5,7 +5,8 @@ CHANGES
 0.5.3dev (unreleased)
 ---------------------
 
-- ...
+- Refactor BasicAuthTransport to reuse as much as possible from Transport
+  that enables to do a simple SafeBasicAuthTransport
 
 
 0.5.2 (2009-02-24)
