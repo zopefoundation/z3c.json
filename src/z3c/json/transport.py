@@ -65,7 +65,7 @@ class Parser(object):
         self._target.feed(self.data)
 
 
-class Transport:
+class Transport(object):
     """Handles an HTTP transaction to an JSON-RPC server.
 
     Standard transport class for JSON-RPC over HTTP.
@@ -201,7 +201,7 @@ class Transport:
         return u.close()
 
 
-class SafeTransport(Transport):
+class SafeTransportMixin(object):
     """Handles an HTTPS transaction to an JSON-RPC server."""
 
     def make_connection(self, host):
@@ -220,8 +220,11 @@ class SafeTransport(Transport):
         else:
             return HTTPS(host, None, **(x509 or {}))
 
+class SafeTransport(SafeTransportMixin, Transport):
+    """Handles an HTTPS transaction to an JSON-RPC server."""
 
 class BasicAuthTransport(Transport):
+    """Handles a transaction to an JSON-RPC server using HTTP basic auth."""
 
     def __init__(self, username=None, password=None, verbose=0):
         self.username=username
@@ -235,7 +238,7 @@ class BasicAuthTransport(Transport):
                 base64.encodestring("%s:%s" % (self.username, self.password)
                     ).replace("\012", ""))
 
-        Transport.send_content(self, connection, request_body)
+        super(BasicAuthTransport, self).send_content(connection, request_body)
 
-class SafeBasicAuthTransport(SafeTransport, BasicAuthTransport):
+class SafeBasicAuthTransport(SafeTransportMixin, BasicAuthTransport):
     """Basic AUTH through HTTPS"""

@@ -5,7 +5,8 @@ CHANGES
 0.5.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix my previous SafeBasicAuthTransport refactoring.
+  Tests are still missing for SSL transports.
 
 
 0.5.3 (2010-08-29)
