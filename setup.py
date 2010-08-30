@@ -23,7 +23,7 @@ def read(*rnames):
 
 setup (
     name='z3c.json',
-    version='0.5.4',
+    version='0.5.5dev',
     author = "Roger Ineichen and the Zope Community",
     author_email = "zope-dev@zope.org",
     description = "Zope3 JSON base libraries",
