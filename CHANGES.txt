@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-0.5.4 (unreleased)
+0.5.4 (2010-08-30)
 ------------------
 
 - Fix my previous SafeBasicAuthTransport refactoring.
