@@ -6,3 +6,8 @@ TODO
 
 - Improve coverage, write tests for all untested code, most of this is related
   to error handling.
+
+- change exceptions.ProtocolError to be pickleable
+  right now
+  pe = cPickle.loads(cPickle.dumps(ProtocolError('http://test.com', 404, 'Not found', {})))
+  fails badly
