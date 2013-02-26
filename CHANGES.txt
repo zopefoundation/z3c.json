@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-0.5.5 (unreleased)
+0.5.5 (2013-02-26)
 ------------------
 
 - More informative error message when the server returns an error.
