@@ -16,12 +16,8 @@ $Id:$
 """
 __docformat__ = "reStructuredText"
 
-import string
 import urllib
-import httplib
 import copy
-import base64
-import types
 import logging
 import socket
 
@@ -147,14 +143,16 @@ class JSONRPCProxy(object):
             logger.error('Received status code %s' % response)
         elif len(response) == 3:
             # that's a valid response format
-            if self.jsonId is not None and \
-                (self.jsonId != response.get('id')):
+            if (self.jsonId is not None and
+                response.get('id') is not None and
+                self.jsonId != response.get('id')):
                 # different request id returned
                 raise ResponseError("Invalid request id returned")
             if response.get('error'):
                 # error mesage in response
                 self.error = response['error']
-                raise ResponseError("Check proxy.error for error message")
+                raise ResponseError("Received error from server: %s" %
+                                    self.error)
             else:
                 # only return the result if everything is fine
                 return response['result']

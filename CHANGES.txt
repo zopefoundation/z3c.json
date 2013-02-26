@@ -5,7 +5,7 @@ CHANGES
 0.5.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- More informative error message when the server returns an error.
 
 
 0.5.4 (2010-08-30)

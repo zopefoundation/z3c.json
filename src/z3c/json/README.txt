@@ -22,7 +22,7 @@ object. Let's check the utilities:
 Read some data:
 
   >>> input = {u'a': ['fred', 7],
-  ...          u'b':['mary', 1.234]}
+  ...          u'b': ['mary', 1.234]}
   >>> jsonStr = jsonWriter.write(input)
   >>> jsonStr
   u'{"a":["fred",7],"b":["mary",1.234]}'
