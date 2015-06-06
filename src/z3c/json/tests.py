@@ -19,6 +19,7 @@ __docformat__ = "reStructuredText"
 
 import unittest
 import BaseHTTPServer
+import doctest
 import random
 import threading
 import urllib
@@ -26,8 +27,6 @@ import cgi
 import pprint
 
 import zope.component
-from zope.testing import doctest
-from zope.testing.doctestunit import DocFileSuite
 
 from z3c.json import minjson as json
 from z3c.json.minjson import ReadException
@@ -789,7 +788,7 @@ class JSONRPCProxyLiveTester(unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
-        DocFileSuite('README.txt',
+        doctest.DocFileSuite('README.txt',
             optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
             ),
         unittest.makeSuite(JSONTests),
